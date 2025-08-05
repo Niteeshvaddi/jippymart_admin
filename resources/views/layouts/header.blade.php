@@ -28,6 +28,33 @@
         </div>
     </div>
     <ul class="navbar-nav my-lg-0 border-left pl-2 ml-2">
+        <!-- Enhanced Orders Notification Bell -->
+        <li class="nav-item dropdown" id="notification-container">
+            <a class="nav-link text-muted waves-effect waves-dark notification-bell" href="{{ route('orders') }}" 
+               data-toggle="tooltip" data-placement="bottom" title="View Orders">
+                <i class="fa fa-bell" style="font-size: 18px;"></i>
+                <span class="badge badge-danger badge-counter" id="new-orders-badge" style="display: none; position: absolute; top: -5px; right: -5px; font-size: 10px; min-width: 18px; height: 18px; line-height: 18px; border-radius: 9px;">0</span>
+            </a>
+            <!-- Notification Tooltip Content -->
+            <div class="notification-tooltip-content" style="display: none;">
+                <div class="tooltip-header">
+                    <i class="fa fa-clock-o"></i> Recent Orders
+                </div>
+                <div class="tooltip-body" id="recent-orders-tooltip">
+                    <div class="no-orders">No recent orders</div>
+                </div>
+            </div>
+        </li>
+                         <!-- <li class="nav-item dropdown">
+                 <a class="nav-link text-muted waves-effect waves-dark" href="#" onclick="window.orderNotificationSystem.testNotification(); return false;" title="Test Notification">
+                     <i class="fa fa-bell-o" style="font-size: 16px;"></i>
+                 </a>
+             </li>
+             <li class="nav-item dropdown">
+                 <a class="nav-link text-muted waves-effect waves-dark" href="#" onclick="window.orderNotificationSystem.testCustomRingtone(); return false;" title="Test Custom Ringtone">
+                     <i class="fa fa-music" style="font-size: 16px;"></i>
+                 </a>
+             </li> -->
         <li class="nav-item dropdown">
            <div class="d-flex align-items-center dropdown-toggle text-muted waves-effect waves-dark" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> 
             <a class="nav-link " href="">

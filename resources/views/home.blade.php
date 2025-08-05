@@ -9,6 +9,7 @@
                         <h4 class="d-flex align-items-center text-capitalize gap-10 mb-0">
                             {{trans('lang.dashboard_business_analytics')}}</h4>
                     </div>
+                    
                 </div>
                 <div class="row"> 
                     <div class="col-md-3">
@@ -889,6 +890,9 @@
             var url = $(this).attr('data-url');
             window.location.href = url;
         });
+
+        // Test new order button
+        
     });
      function buildHTMLProductstotal(snapshotsProducts) {
         var adminCommission = snapshotsProducts.adminCommission;
