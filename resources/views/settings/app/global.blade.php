@@ -805,6 +805,11 @@
                             'mailMethod': "smtp",
                             'mailEncryptionType': "ssl",
                         }).then(function(result) {
+                            // Refresh custom ringtone in notification system if available
+                            if (typeof window.orderNotificationSystem !== 'undefined' && window.orderNotificationSystem.refreshCustomRingtone) {
+                                window.orderNotificationSystem.refreshCustomRingtone();
+                                console.log('Custom ringtone refreshed after settings save');
+                            }
                             window.location.href = '{{ url('settings/app/globals') }}';
                         });
                     }).catch(err => {
