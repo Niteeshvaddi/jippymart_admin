@@ -79,48 +79,50 @@
 <span class="dashed-line"></span>
 <div class="row justify-content-md-end mb-3" style="width: 97%">
 <div class="col-md-7 col-lg-7">
-<dl class="row text-right">
-<dt class="col-6">{{trans('lang.items_price')}} :</dt>
-<dd class="col-6"><label class="total_item_price"></label>
-</dd>
-<dt class="col-6">{{trans('lang.addon_cost')}} :</dt>
-<dd class="col-6">
-<label class="total_addon_price"></label>
-<hr>
-</dd>
-<dt class="col-6">{{trans('lang.sub_total')}} :</dt>
-<dd class="col-6">
-<label class="total_price"></label></dd>
-<dt class="col-6">{{trans('lang.coupon_discount')}} :</dt>
-<dd class="col-6">
--
-<label class="total_discount_amount"></label>
-</dd>
-<!-- <dt class="col-6">Coupon discount:</dt>
-<dd class="col-6">
-- $ 0
-</dd> -->
-<dt class="col-6">{{trans('lang.special_offer')}} {{trans('lang.coupon_discount')}} :</dt>
-<dd class="col-6">
--
-<label class="total_special_discount_amount"></label>
-</dd>
-<span class="taxes row w-100 m-0"></span>
-<dt class="col-6">{{trans('lang.dm_tips')}} :</dt>
-<dd class="col-6">
-<label class="total_tip_amount">+ $ 0</label>
-</dd>
-<dt class="col-6">{{trans('lang.deliveryFee')}} :</dt>
-<dd class="col-6">
-<label class="total_delivery_amount">+ $ 0</label>
-<hr>
-</dd>
-<dt class="col-6" style="font-size: 20px">{{trans('lang.total')}} :
-</dt>
-<dd class="col-6" style="font-size: 20px">
-<label class="total_amount"></label>
-</dd>
-</dl>
+<table class="order-summary-table" style="width:100%; font-size:16px; margin-bottom:0;">
+  <tr style="background:#eaffea;">
+    <td><b>Subtotal</b></td>
+    <td style="text-align:right; color:green;"><b><span class="sub_total_val"></span></b></td>
+  </tr>
+  <tr><td colspan="2" style="font-size:13px; color:#888; margin-top:12px; height:18px;"></td></tr>
+  <tr>
+    <td>Discount</td>
+    <td style="text-align:right; color:#e74c3c;"><span class="discount_val"></span></td>
+  </tr>
+  <tr>
+    <td>Special Offer Discount</td>
+    <td style="text-align:right; color:#e74c3c;"><span class="special_discount_val"></span></td>
+  </tr>
+  <tr><td colspan="2" style="font-size:13px; color:#888; margin-top:12px; height:18px;"></td></tr>
+  <tr>
+    <td>SGST (<span class="sgst_rate"></span>%)</td>
+    <td style="text-align:right; color:#27ae60;">+<span class="sgst_val"></span></td>
+  </tr>
+  <tr>
+    <td>GST (<span class="gst_rate"></span>%)</td>
+    <td style="text-align:right; color:#27ae60;">+<span class="gst_val"></span></td>
+  </tr>
+  <tr><td colspan="2" style="font-size:13px; color:#888; margin-top:12px; height:18px;"></td></tr>
+  <tr>
+    <td>Delivery Charge</td>
+    <td style="text-align:right; color:#2980b9;">+<span class="delivery_charge_val"></span></td>
+  </tr>
+  <tr><td colspan="2" style="font-size:13px; color:#888; margin-top:12px; height:18px;"></td></tr>
+  <tr>
+    <td>Tip Amount</td>
+    <td style="text-align:right; color:#2980b9;">+<span class="tip_amount_val"></span></td>
+  </tr>
+  <tr><td colspan="2"><hr></td></tr>
+  <tr style="font-size:20px;">
+    <td><b>Total Amount</b></td>
+    <td style="text-align:right; color:#2c3e50;"><b><span class="total_amount_val"></span></b></td>
+  </tr>
+  <tr>
+    <td colspan="2" style="font-size:12px; color:#888;">
+      Admin Commission (<span class="admin_commission_rate"></span>) <span style="color:red;"><span style="margin:right;" class="admin_commission_val"></span></span>
+    </td>
+  </tr>
+</table>
 </div>
 </div>
 <span class="dashed-line"></span>
@@ -341,6 +343,7 @@ ref.get().then( async function(snapshots){
         }
       });
     }
+    fillPrintOrderSummary(order);
     jQuery("#data-table_processing").hide();
   })
   function buildHTMLProductsList(snapshotsProducts){
@@ -568,5 +571,96 @@ head.appendChild(style);
     window.print();
     document.body.innerHTML = originalContents;
 }
+// --- Fill values dynamically using the same logic as edit.blade.php ---
+function fillPrintOrderSummary(order) {
+  // Reference: buildHTMLProductstotal from edit.blade.php
+  var intRegex = /^\d+$/;
+  var floatRegex = /^((\d+(\.\d *)?)|((\d*\.)?\d+))$/;
+  var baseDeliveryCharge = 23;
+  var gstRate = 18;
+  var sgstRate = 5;
+  var subtotal = 0;
+  var decimal_degits = window.decimal_degits || 2;
+  var currencyAtRight = window.currencyAtRight || false;
+  var currentCurrency = window.currentCurrency || '₹';
+  var products = order.products;
+  if(products) {
+    products.forEach(function(product) {
+      var price = (product.discountPrice && parseFloat(product.discountPrice) > 0)
+        ? parseFloat(product.discountPrice)
+        : parseFloat(product.price);
+      subtotal += price * (parseInt(product.quantity) || 1);
+    });
+  }
+  var sgst = subtotal * (sgstRate / 100);
+  var gst = 0;
+  var deliveryCharge = order.deliveryCharge;
+  if (parseFloat(deliveryCharge) > 0) {
+    gst = parseFloat(deliveryCharge) * (gstRate / 100);
+  } else {
+    gst = baseDeliveryCharge * (gstRate / 100);
+  }
+  var total_price = subtotal;
+  if(intRegex.test(order.extras_price) || floatRegex.test(order.extras_price)) {
+    total_price += parseFloat(order.extras_price);
+  }
+  var priceWithCommision = total_price;
+  var discount = order.discount;
+  if(intRegex.test(discount) || floatRegex.test(discount)) {
+    discount = parseFloat(discount).toFixed(decimal_degits);
+    total_price -= parseFloat(discount);
+  }
+  var specialDiscount = order.specialDiscount;
+  var special_discount = 0;
+  if(specialDiscount && specialDiscount.special_discount) {
+    special_discount = parseFloat(specialDiscount.special_discount).toFixed(decimal_degits);
+    total_price -= parseFloat(special_discount);
+  }
+  var total_tax_amount = sgst + gst;
+  total_price = parseFloat(total_price) + parseFloat(total_tax_amount);
+  var totalAmount = total_price;
+  if(intRegex.test(deliveryCharge) || floatRegex.test(deliveryCharge)) {
+    deliveryCharge = parseFloat(deliveryCharge).toFixed(decimal_degits);
+    totalAmount += parseFloat(deliveryCharge);
+  }
+  var tip_amount = order.tip_amount;
+  if(intRegex.test(tip_amount) || floatRegex.test(tip_amount)) {
+    tip_amount = parseFloat(tip_amount).toFixed(decimal_degits);
+    totalAmount += parseFloat(tip_amount);
+  }
+  // Format helpers
+  function fmt(val) {
+    return currencyAtRight ? (val + currentCurrency) : (currentCurrency + val);
+  }
+  // Fill values
+  document.querySelector('.sub_total_val').textContent = fmt(parseFloat(subtotal).toFixed(decimal_degits));
+  document.querySelector('.discount_val').textContent = '-'+fmt(discount || '0.00');
+  document.querySelector('.special_discount_val').textContent = '-'+fmt(special_discount || '0.00');
+  document.querySelector('.sgst_rate').textContent = sgstRate;
+  document.querySelector('.sgst_val').textContent = sgst.toFixed(decimal_degits);
+  document.querySelector('.gst_rate').textContent = gstRate;
+  document.querySelector('.gst_val').textContent = gst.toFixed(decimal_degits);
+  document.querySelector('.delivery_charge_val').textContent = fmt(deliveryCharge || '0.00');
+  document.querySelector('.tip_amount_val').textContent = fmt(tip_amount || '0.00');
+  document.querySelector('.total_amount_val').textContent = fmt(parseFloat(totalAmount).toFixed(decimal_degits));
+  // Admin Commission
+  var adminCommission = order.adminCommission;
+  var adminCommissionType = order.adminCommissionType;
+  var adminCommHtml = '';
+  var adminCommission_val = 0;
+  var basePrice = 0;
+  if(adminCommissionType=="Percent") {
+    basePrice = (priceWithCommision/(1+(parseFloat(adminCommission)/100)));
+    adminCommission = parseFloat(priceWithCommision-basePrice);
+    adminCommHtml = "("+adminCommission+"%)";
+  } else {
+    basePrice = priceWithCommision-adminCommission;
+    adminCommission = parseFloat(priceWithCommision-basePrice);
+  }
+  adminCommission_val = fmt(parseFloat(adminCommission).toFixed(decimal_degits));
+  document.querySelector('.admin_commission_rate').textContent = adminCommissionType=="Percent" ? order.adminCommission+"%" : '';
+  document.querySelector('.admin_commission_val').textContent = '( '+adminCommission_val+' )';
+}
+// Usage: after fetching order data, call fillPrintOrderSummary(order)
 </script>
 @endsection
