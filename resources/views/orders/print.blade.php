@@ -433,158 +433,123 @@ ref.get().then( async function(snapshots){
         $('.total_addon_price').text(total_addon_price);
         return html;      
 }
+// --- PATCH: Sync print total logic with edit page ---
 function buildHTMLProductstotal(snapshotsProducts){
-        var html='';
-        var alldata=[];
-        var number= [];
-        var adminCommission = snapshotsProducts.adminCommission;
-        var adminCommissionType = snapshotsProducts.adminCommissionType;
-        var discount = snapshotsProducts.discount;
-        var couponCode = snapshotsProducts.couponCode;
-        var extras = snapshotsProducts.extras;
-        var extras_price = snapshotsProducts.extras_price;
-        var rejectedByDrivers = snapshotsProducts.rejectedByDrivers;
-        var takeAway = snapshotsProducts.takeAway;
-        var tip_amount = snapshotsProducts.tip_amount;
-        var notes = snapshotsProducts.notes;
-        var tax_amount = snapshotsProducts.vendor.tax_amount;
-        var status = snapshotsProducts.status;
-        var products = snapshotsProducts.products;
-        var deliveryCharge = snapshotsProducts.deliveryCharge;
-        var specialDiscount = snapshotsProducts.specialDiscount;
-        var intRegex = /^\d+$/;
-        var floatRegex = /^((\d+(\.\d *)?)|((\d*\.)?\d+))$/;
-        if (products) {
-          products.forEach((product) => {
-              var val=product;
-          });
-        }
-          if(intRegex.test(discount) || floatRegex.test(discount)) {
-            discount=parseFloat(discount).toFixed(decimal_degits);
-            total_price -=parseFloat(discount);
-            if(currencyAtRight){
-                discount_val = parseFloat(discount).toFixed(decimal_degits) + "" + currentCurrency;
-            }else{
-               discount_val = currentCurrency + "" + parseFloat(discount).toFixed(decimal_degits);
-            }
-            couponCode_html='';
-            if (couponCode) {
-              couponCode_html='</br><small>{{trans("lang.coupon_codes")}} :'+couponCode+'</small>';
-            }
-            html=html+'<tr><td class="label">{{trans("lang.discount")}}'+couponCode_html+'</td><td class="discount">-'+discount_val+'</td></tr>';
-            $('.total_discount_amount').text(discount_val);
-          }
-          var special_discount = 0;
-          if(specialDiscount != undefined){
-            special_discount = parseFloat(specialDiscount.special_discount).toFixed(decimal_degits);
-            total_price = total_price - special_discount;
-            if(currencyAtRight){
-              special_discount = parseFloat(discount).toFixed(decimal_degits)+""+currentCurrency;
-            }else{
-              special_discount = currentCurrency+""+ parseFloat(discount).toFixed(decimal_degits);
-            }
-            $('.total_special_discount_amount').text(special_discount);
-          }else{
-            if(currencyAtRight){
-              $('.total_special_discount_amount').text(special_discount+""+currentCurrency);
-            }else{
-              $('.total_special_discount_amount').text(currentCurrency+""+special_discount);
-            }
-          }
-            var tax = 0;
-            taxlabel = '';
-            taxlabeltype = '';
-            if (snapshotsProducts.hasOwnProperty('taxSetting')) {
-                var total_tax_amount = 0;
-                for (var i = 0; i < snapshotsProducts.taxSetting.length; i++) {
-                    var data = snapshotsProducts.taxSetting[i];
-                    if (data.type && data.tax) {
-                        if (data.type == "percentage") {
-                            tax = (data.tax * total_price) / 100;
-                            taxlabeltype = "%";
-                            var taxvalue = data.tax;
-                        } else {
-                            tax = data.tax;
-                            taxlabeltype = "";
-                        if (currencyAtRight) {
-                            var taxvalue = parseFloat(data.tax).toFixed(decimal_degits) + "" + currentCurrency;
-                        } else {
-                            var taxvalue = currentCurrency + "" + parseFloat(data.tax).toFixed(decimal_degits);
-                        }
-                        }
-                        taxlabel = data.title;
-                    }
-                    total_tax_amount += parseFloat(tax);
-                if (currencyAtRight) {
-                $('.taxes').append("<dt class='col-6'> " + taxlabel + " (" + taxvalue + taxlabeltype + ")</dt><dd class='col-6'><label>"+ parseFloat(tax).toFixed(decimal_degits)+" "+currentCurrency +"</label></dt>");
-            } else {
-                $('.taxes').append("<dt class='col-6'> " + taxlabel + " (" + taxvalue + taxlabeltype + ")</dt><dd class='col-6'><label>"+currentCurrency+" "+ parseFloat(tax).toFixed(decimal_degits) +"</label></dt>");
-            }
-         }
-                total_price = parseFloat(total_price) + parseFloat(total_tax_amount);
-       }
-             if(intRegex.test(deliveryCharge) || floatRegex.test(deliveryCharge)) {
-                deliveryCharge=parseFloat(deliveryCharge).toFixed(2);
-                total_price +=parseFloat(deliveryCharge);
-                if (currencyAtRight) {
-                    deliveryCharge_val = "+ " + parseFloat(deliveryCharge).toFixed(decimal_degits) + "" + currentCurrency;
-                } else {
-                    deliveryCharge_val = "+ " + currentCurrency + "" + parseFloat(deliveryCharge).toFixed(decimal_degits);
-                }
-                if (takeAway =='' || takeAway == false) {
-                    deliveryChargeVal = deliveryCharge;
-                    html=html+'<tr><td class="label">{{trans("lang.deliveryCharge")}}</td><td class="deliveryCharge">+'+deliveryCharge_val+'</td></tr>';
-                    $('.total_delivery_amount').text(deliveryCharge_val);
-                }
-          }
-          var total_item_price=total_price;
-          if(intRegex.test(tip_amount) || floatRegex.test(tip_amount)) {
-              tip_amount=parseFloat(tip_amount).toFixed(decimal_degits);
-              total_price +=parseFloat(tip_amount);
-              total_price=parseFloat(total_price).toFixed(decimal_degits);
-                if(currencyAtRight){
-                  tip_amount_val = '+' + parseFloat(tip_amount).toFixed(decimal_degits) + "" + currentCurrency;
-                }else{
-                   tip_amount_val = '+' + currentCurrency + "" + parseFloat(tip_amount).toFixed(decimal_degits);
-                }
-                if (takeAway =='' || takeAway == false) {
-                    html=html+'<tr><td class="label">{{trans("lang.tip_amount")}}</td><td class="tip_amount_val">+'+tip_amount_val+'</td></tr>';
-                    $('.total_tip_amount').text(tip_amount_val);
-                }
-            }
-            if(currencyAtRight){
-              total_price_val = parseFloat(total_price).toFixed(decimal_degits)+""+currentCurrency;
-            }else{
-               total_price_val = currentCurrency+""+parseFloat(total_price).toFixed(decimal_degits);
-            }
-            $('.total_amount').text(total_price_val);
-          html=html+'<tr><td class="label">{{trans("lang.total_amount")}}</td><td class="total_price_val">'+total_price_val+'</td></tr>';
-          if(adminCommission!=undefined && adminCommissionType!=undefined){
-              var commission = 0;
-              if(adminCommissionType=="Percent"){
-                  commission = (total_item_price*parseFloat(adminCommission))/100;
-              }else{
-                  commission = parseFloat(adminCommission);
-              }
-                adminCommission = commission;
-            }else if(adminCommission!=undefined){
-                var commission = parseFloat(adminCommission);
-                adminCommission = commission;
-          }
-          if (adminCommission) {
-            adminCommission = parseFloat(adminCommission).toFixed(2);
-            if(currencyAtRight){
-              adminCommission_val = adminCommission+""+currentCurrency;
-            }else{
-               adminCommission_val = currentCurrency+""+adminCommission;
-            }
-              html=html+'<tr><td class="label"><small>( {{trans("lang.admin_commission")}} </small></td><td class="adminCommission_val"><small>'+adminCommission_val+')</small></td></tr>';            
-          }
-             if (notes) {
-              html=html+'<tr><td class="label">{{trans("lang.notes")}}</td><td class="adminCommission_val">'+notes+'</td></tr>';            
-          }
-          return html;      
+    var html='';
+    var alldata=[];
+    var number= [];
+    var adminCommission = snapshotsProducts.adminCommission;
+    var adminCommissionType = snapshotsProducts.adminCommissionType;
+    var discount = snapshotsProducts.discount;
+    var couponCode = snapshotsProducts.couponCode;
+    var extras = snapshotsProducts.extras;
+    var extras_price = snapshotsProducts.extras_price;
+    var rejectedByDrivers = snapshotsProducts.rejectedByDrivers;
+    var takeAway = snapshotsProducts.takeAway;
+    var tip_amount = snapshotsProducts.tip_amount;
+    var notes = snapshotsProducts.notes;
+    var tax_amount = snapshotsProducts.vendor.tax_amount;
+    var status = snapshotsProducts.status;
+    var products = snapshotsProducts.products;
+    var deliveryCharge = snapshotsProducts.deliveryCharge;
+    var specialDiscount = snapshotsProducts.specialDiscount;
+    var intRegex = /^\d+$/;
+    var floatRegex = /^((\d+(\.\d *)?)|((\d*\.)?\d+))$/;
+    var baseDeliveryCharge = 23; // default, override with settings if available
+    var gstRate = 18;
+    var sgstRate = 5;
+    var subtotal = 0;
+    var decimal_degits = 2;
+    var currencyAtRight = false;
+    var currentCurrency = '₹';
+    if(typeof currencyAtRightSetting !== 'undefined') currencyAtRight = currencyAtRightSetting;
+    if(typeof currentCurrencySetting !== 'undefined') currentCurrency = currentCurrencySetting;
+    if(products) {
+        products.forEach((product) => {
+            var price = (product.discountPrice && parseFloat(product.discountPrice) > 0)
+                ? parseFloat(product.discountPrice)
+                : parseFloat(product.price);
+            subtotal += price * (parseInt(product.quantity) || 1);
+        });
+    }
+    var sgst = subtotal * (sgstRate / 100); // 5% of subtotal only
+    var gst = 0;
+    if (parseFloat(deliveryCharge) > 0) {
+        gst = parseFloat(deliveryCharge) * (gstRate / 100); // 18% of delivery charge
+    } else {
+        gst = baseDeliveryCharge * (gstRate / 100); // 18% of base if delivery free
+    }
+    // Calculate total price (subtotal + delivery + tips + extras)
+    var total_price = subtotal;
+    if(intRegex.test(extras_price) || floatRegex.test(extras_price)) {
+        total_price += parseFloat(extras_price);
+    }
+    var priceWithCommision = total_price;
+    if(intRegex.test(discount) || floatRegex.test(discount)) {
+        discount = parseFloat(discount).toFixed(decimal_degits);
+        total_price -= parseFloat(discount);
+    }
+    if(specialDiscount && specialDiscount.special_discount) {
+        var special_discount = parseFloat(specialDiscount.special_discount).toFixed(decimal_degits);
+        total_price -= parseFloat(special_discount);
+    }
+    var total_tax_amount = sgst + gst;
+    total_price = parseFloat(total_price) + parseFloat(total_tax_amount);
+    var totalAmount = total_price;
+    if(intRegex.test(deliveryCharge) || floatRegex.test(deliveryCharge)) {
+        deliveryCharge = parseFloat(deliveryCharge).toFixed(decimal_degits);
+        totalAmount += parseFloat(deliveryCharge);
+    }
+    if(intRegex.test(tip_amount) || floatRegex.test(tip_amount)) {
+        tip_amount = parseFloat(tip_amount).toFixed(decimal_degits);
+        totalAmount += parseFloat(tip_amount);
+    }
+    html += '<tr><td class="label">Items Price :</td><td>' + subtotal.toFixed(decimal_degits) + currentCurrency + '</td></tr>';
+    html += '<tr><td class="label">Addon Cost :</td><td>' + (extras_price ? parseFloat(extras_price).toFixed(decimal_degits) : '0.00') + currentCurrency + '</td></tr>';
+    html += '<tr><td class="label">Subtotal :</td><td>' + subtotal.toFixed(decimal_degits) + currentCurrency + '</td></tr>';
+    if(intRegex.test(discount) || floatRegex.test(discount)) {
+        var discount_val = currencyAtRight ? discount + currentCurrency : currentCurrency + discount;
+        html += '<tr><td class="label">Discount :</td><td>-'+discount_val+'</td></tr>';
+    }
+    if(specialDiscount && specialDiscount.special_discount) {
+        var special_discount_val = currencyAtRight ? parseFloat(specialDiscount.special_discount).toFixed(decimal_degits) + currentCurrency : currentCurrency + parseFloat(specialDiscount.special_discount).toFixed(decimal_degits);
+        html += '<tr><td class="label">Special Offer Discount :</td><td>-'+special_discount_val+'</td></tr>';
+    }
+    html += '<tr><td class="label">GST (18%) :</td><td>₹ '+gst.toFixed(decimal_degits)+'</td></tr>';
+    html += '<tr><td class="label">SGST (5%) :</td><td>₹ '+sgst.toFixed(decimal_degits)+'</td></tr>';
+    if(intRegex.test(tip_amount) || floatRegex.test(tip_amount)) {
+        html += '<tr><td class="label">DM Tips :</td><td>+ '+tip_amount+currentCurrency+'</td></tr>';
+    }
+    if(intRegex.test(deliveryCharge) || floatRegex.test(deliveryCharge)) {
+        html += '<tr><td class="label">Delivery Fee :</td><td>+ '+deliveryCharge+currentCurrency+'</td></tr>';
+    }
+    html += '<tr><td class="label"><b>Total :</b></td><td><b>'+currentCurrency+parseFloat(totalAmount).toFixed(decimal_degits)+'</b></td></tr>';
+    // Admin Commission (optional, for reference)
+    var adminCommHtml = "";
+    var adminCommission_val = 0;
+    var basePrice = 0;
+    if(adminCommissionType=="Percent") {
+        basePrice = (priceWithCommision/(1+(parseFloat(adminCommission)/100)));
+        adminCommission = parseFloat(priceWithCommision-basePrice);
+        adminCommHtml = "("+adminCommissionType+"%)";
+    } else {
+        basePrice = priceWithCommision-adminCommission;
+        adminCommission = parseFloat(priceWithCommision-basePrice);
+    }
+    if(currencyAtRight) {
+        adminCommission_val = parseFloat(adminCommission).toFixed(decimal_degits)+""+currentCurrency;
+    } else {
+        adminCommission_val = currentCurrency+""+parseFloat(adminCommission).toFixed(decimal_degits);
+    }
+    if(adminCommission) {
+        html += '<tr><td class="label"><small>Admin Commission '+adminCommHtml+'</small></td><td style="color:red"><small>( '+adminCommission_val+' )</small></td></tr>';
+    }
+    if(notes) {
+        html += '<tr><td class="label">Notes</td><td class="adminCommission_val">'+notes+'</td></tr>';
+    }
+    return html;
 }
+// --- END PATCH ---
 function printDiv(divName) {
   var css = '@page { size: portrait; }',
     head = document.head || document.getElementsByTagName('head')[0],

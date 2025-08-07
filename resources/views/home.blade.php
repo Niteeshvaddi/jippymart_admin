@@ -469,77 +469,57 @@
                 info: false
             });
         });
-        var offest = 1;
-        var pagesize = 10;
-        var start = null;
-        var end = null;
-        var endarray = [];
-        var inx = parseInt(offest) * parseInt(pagesize);
-        var append_listtop_drivers = document.getElementById('append_list_top_drivers');
-        append_listtop_drivers.innerHTML = '';
-        ref = db.collection('users');
-        ref.where('role', '==', 'driver').orderBy('orderCompleted', 'desc').limit(inx).get().then(async (snapshots) => {
-            var html = '';
-            html = await buildDriverHTML(snapshots);
-            if (html != '') {
-                append_listtop_drivers.innerHTML = html;
-                start = snapshots.docs[snapshots.docs.length - 1];
-                endarray.push(snapshots.docs[0]);
-            }
-            $('#driverTable').DataTable({
-                order: [],
-                columnDefs: [
-                    {orderable: false, targets: [0, 3]},
-                ],
-                "language": {
-                    "zeroRecords": "{{trans("lang.no_record_found")}}",
-                    "emptyTable": "{{trans("lang.no_record_found")}}"
-                },
-                responsive: true,
-                paging: false,
-                info: false
-            });
-        });
+        fetchTopDriversByCompletedOrders();
+        var now = new Date();
+        var startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        var endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
         var append_list_recent_payouts = document.getElementById('append_list_recent_payouts');
         append_list_recent_payouts.innerHTML = '';
-        db.collection('payouts').where('paymentStatus', '==', 'Success').orderBy('paidDate', 'desc').limit(10).get().then(async (snapshots) => {
-            var html = '';
-            html = await buildRecentPayoutsHTML(snapshots);
-            if (html != '') {
-                append_list_recent_payouts.innerHTML = html;
-            }
-            setTimeout(function(){
-                $('#recentPayoutsTable').DataTable({
-                    columnDefs: [
-                        {
-                            targets: 2,
-                            type: 'date',
-                            render: function (data) {
-                                return data;
-                            } 
-                        },
-                        {
-                            targets: 1,
-                            type: 'num-fmt',
-                            render: function (data, type, row, meta) {
-                                if (type === 'display') {
+        db.collection('payouts')
+            .where('paymentStatus', '==', 'Success')
+            .where('paidDate', '>=', firebase.firestore.Timestamp.fromDate(startOfMonth))
+            .where('paidDate', '<=', firebase.firestore.Timestamp.fromDate(endOfMonth))
+            .orderBy('paidDate', 'desc')
+            .limit(10)
+            .get()
+            .then(async (snapshots) => {
+                var html = '';
+                html = await buildRecentPayoutsHTML(snapshots);
+                if (html != '') {
+                    append_list_recent_payouts.innerHTML = html;
+                }
+                setTimeout(function(){
+                    $('#recentPayoutsTable').DataTable({
+                        columnDefs: [
+                            {
+                                targets: 2,
+                                type: 'date',
+                                render: function (data) {
                                     return data;
                                 }
-                                return parseFloat(data.replace(/[^0-9.-]+/g, ""));
-                            }
+                            },
+                            {
+                                targets: 1,
+                                type: 'num-fmt',
+                                render: function (data, type, row, meta) {
+                                    if (type === 'display') {
+                                        return data;
+                                    }
+                                    return parseFloat(data.replace(/[^0-9.-]+/g, ""));
+                                }
+                            },
+                        ],
+                        order: [['2', 'desc']],
+                        "language": {
+                            "zeroRecords": "{{trans('lang.no_record_found')}}",
+                            "emptyTable": "{{trans('lang.no_record_found')}}"
                         },
-                    ],
-                    order: [['2', 'desc']],
-                    "language": {
-                        "zeroRecords": "{{trans("lang.no_record_found")}}",
-                        "emptyTable": "{{trans("lang.no_record_found")}}"
-                    },
-                    responsive: true,
-                    paging: false,
-                    info: false
-                });
-            },1500);
-        });
+                        responsive: true,
+                        paging: false,
+                        info: false
+                    });
+                },1500);
+            });
     });
     async function getTotalEarnings() {
         var intRegex = /^\d+$/;
@@ -693,10 +673,136 @@
         })
         jQuery("#data-table_processing").hide();
     }
-    function buildHTML(snapshots) {
+    async function fetchTopDriversByCompletedOrders(limit = 10) {
+        let driverOrderCount = {};
+        let driverDetails = {};
+        const completedOrders = await db.collection('restaurant_orders').where('status', '==', 'Order Completed').get();
+        completedOrders.docs.forEach(doc => {
+            let data = doc.data();
+            if (data.driverID) {
+                driverOrderCount[data.driverID] = (driverOrderCount[data.driverID] || 0) + 1;
+            }
+        });
+        let sortedDriverIDs = Object.keys(driverOrderCount).sort((a, b) => driverOrderCount[b] - driverOrderCount[a]).slice(0, limit);
+        const driverFetches = sortedDriverIDs.map(driverID => db.collection('users').doc(driverID).get());
+        const driverDocs = await Promise.all(driverFetches);
+        driverDocs.forEach(doc => {
+            if (doc.exists) {
+                driverDetails[doc.id] = doc.data();
+            }
+        });
+        let html = '';
+        sortedDriverIDs.forEach(driverID => {
+            let driver = driverDetails[driverID];
+            if (driver) {
+                let profilePic = driver.profilePictureURL || placeholderImage;
+                let name = (driver.firstName || '') + ' ' + (driver.lastName || '');
+                let completed = driverOrderCount[driverID] || 0;
+                let driverEditUrl = `{{route('drivers.edit',':id')}}`.replace(':id', driverID);
+                html += `<tr>`;
+                html += `<td class="text-center"><img class="img-circle img-size-32 mr-2 redirecttopage" data-url="${driverEditUrl}" style="width:60px;height:60px;cursor:pointer;" src="${profilePic}" alt="image"></td>`;
+                html += `<td class="redirecttopage" data-url="${driverEditUrl}" style="cursor:pointer;">${name}</td>`;
+                html += `<td>${completed}</td>`;
+                html += `<td><span class=\"mdi mdi-lead-pencil redirecttopage\" data-url="${driverEditUrl}" style="cursor:pointer;" title=\"Edit\"></span></td>`;
+                html += `</tr>`;
+            }
+        });
+        document.getElementById('append_list_top_drivers').innerHTML = html;
+        $('#driverTable').DataTable({
+            order: [],
+            columnDefs: [
+                {orderable: false, targets: [0, 3]},
+            ],
+            "language": {
+                "zeroRecords": "{{trans('lang.no_record_found')}}",
+                "emptyTable": "{{trans('lang.no_record_found')}}"
+            },
+            responsive: true,
+            paging: false,
+            info: false
+        });
+    }
+    async function buildOrderHTML(snapshots) {
         var html = '';
         var count = 1;
-        var rating = 0;
+        for (const listval of snapshots.docs) {
+            let val = listval.data();
+            val.id = listval.id;
+            let totalAmount = '';
+            let orderEditUrl = `{{route('orders.edit',':id')}}`.replace(':id', val.id);
+            try {
+                const billingDoc = await db.collection('order_Billing').doc(val.id).get();
+                if (billingDoc.exists && billingDoc.data().ToPay !== undefined) {
+                    let toPay = parseFloat(billingDoc.data().ToPay);
+                    if (!isNaN(toPay)) {
+                        if (currencyAtRight) {
+                            totalAmount = toPay.toFixed(decimal_degits) + currentCurrency;
+                        } else {
+                            totalAmount = currentCurrency + toPay.toFixed(decimal_degits);
+                        }
+                    }
+                }
+            } catch (e) {}
+            if (!totalAmount) {
+                totalAmount = '-';
+            }
+            html += `<tr>`;
+            html += `<td class="redirecttopage" data-url="${orderEditUrl}" style="cursor:pointer;text-align:center">${val.id}</td>`;
+            html += `<td>${val.vendor && val.vendor.title ? val.vendor.title : ''}</td>`;
+            html += `<td>${totalAmount}</td>`;
+            html += `<td>${val.products && val.products.length ? val.products.length : 0}</td>`;
+            html += `</tr>`;
+            count++;
+        }
+        return html;
+    }
+    async function buildRecentPayoutsHTML(snapshots) {
+        var intRegex = /^\d+$/;
+        var floatRegex = /^((\d+(\.\d *)?)|((\d*\.)?\d+))$/;
+        var html = '';
+        var count = 1;
+        snapshots.docs.forEach((listval) => {
+            val = listval.data();
+            val.id = listval.id;
+            getRestaurantName(val.vendorID);
+            var price = val.amount;
+            if (intRegex.test(price) || floatRegex.test(price)) {
+                price = parseFloat(price).toFixed(2);
+            } else {
+                price = 0;
+            }
+            if (currencyAtRight) {
+                price_val = parseFloat(price).toFixed(decimal_degits) + "" + currentCurrency;
+            } else {
+                price_val = currentCurrency + "" + parseFloat(price).toFixed(decimal_degits);
+            }
+            var vendorViewUrl = `{{route('restaurants.view',':id')}}`.replace(':id', val.vendorID);
+            html = html + `<tr>`;
+            html = html + `<td class="redirecttopage restname_${val.vendorID}" data-url="${vendorViewUrl}" style="cursor:pointer"></td>`;
+            html = html + `<td class="redirecttopage" data-url="${vendorViewUrl}" style="cursor:pointer">(` + price_val + ")</td>";
+            var date = val.paidDate.toDate().toDateString();
+            var time = val.paidDate.toDate().toLocaleTimeString('en-US');
+            html = html + '<td>' + date + ' ' + time + '</td>';
+            if (val.note != undefined && val.note != '') {
+                html = html + '<td>' + val.note + '</td>';
+            } else {
+                html = html + '<td></td>';
+            }
+            html = html + '</tr>';
+        });
+        return html;
+    }
+    function getRestaurantName(vendorId) {
+        database.collection('vendors').doc(vendorId).get().then(async function (snapshots) {
+            if(snapshots.exists){
+                var data = snapshots.data();
+                $(".restname_"+vendorId).text(data.title);
+            }
+        });
+    }
+    async function buildHTML(snapshots) {
+        var html = '';
+        var count = 1;
         snapshots.docs.forEach((listval) => {
             val = listval.data();
             val.id = listval.id;
@@ -726,103 +832,6 @@
             html = html + '<td><a href="' + route + '" > <span class="mdi mdi-lead-pencil" title="Edit"></span></a></td>';
             html = html + '</tr>';
             rating = 0;
-            count++;
-        });
-        return html;
-    }
-    function buildDriverHTML(snapshots) {
-        var html = '';
-        var count = 1;
-        snapshots.docs.forEach((listval) => {
-            val = listval.data();
-            val.id = listval.id;
-            var driverroute = '<?php echo route("drivers.edit", ":id");?>';
-            driverroute = driverroute.replace(':id', val.id);
-            var driverviewroute = '<?php echo route("drivers.view", ":id");?>';
-            driverviewroute = driverviewroute.replace(':id', val.id);
-            html = html + '<tr>';
-            if (val.profilePictureURL == '' && val.profilePictureURL == null) {
-                html = html + '<td class="text-center"><img class="img-circle img-size-32 mr-2" style="width:60px;height:60px;" src="' + placeholderImage + '" alt="image"></td>';
-            } else {
-                html = html + '<td class="text-center"><img onerror="this.onerror=null;this.src=\'' + placeholderImage + '\'" class="img-circle img-size-32 mr-2" style="width:60px;height:60px;" src="' + val.profilePictureURL + '" alt="image"></td>';
-            }
-            html = html + '<td data-url="' + driverviewroute + '" class="redirecttopage">' + val.firstName + ' ' + val.lastName + '</td>';
-            html = html + '<td data-url="' + driverroute + '" class="redirecttopage">' + val.orderCompleted + '</td>';
-            html = html + '<td data-url="' + driverroute + '" class="redirecttopage"><span class="mdi mdi-lead-pencil" title="Edit"></span></td>';
-            html = html + '</tr>';
-            count++;
-        });
-        return html;
-    }
-    async function buildRecentPayoutsHTML(snapshots) {
-        var intRegex = /^\d+$/;
-        var floatRegex = /^((\d+(\.\d *)?)|((\d*\.)?\d+))$/;
-        var html = '';
-        var count = 1;
-        snapshots.docs.forEach((listval) => {
-            val = listval.data();
-            val.id = listval.id;
-            getRestaurantName(val.vendorID);
-            var price = val.amount;
-            if (intRegex.test(price) || floatRegex.test(price)) {
-                price = parseFloat(price).toFixed(2);
-            } else {
-                price = 0;
-            }
-            if (currencyAtRight) {
-                price_val = parseFloat(price).toFixed(decimal_degits) + "" + currentCurrency;
-            } else {
-                price_val = currentCurrency + "" + parseFloat(price).toFixed(decimal_degits);
-            }
-            html = html + '<tr class="payout_'+val.id+'">';
-            var route = '{{route("restaurants.view",":id")}}';
-            route = route.replace(':id', val.vendorID);   
-            html = html + '<td data-url="'+route+'" class="redirecttopage restname_'+val.vendorID+'" ></td>';
-            html = html + '<td class="text-red">(' + price_val + ')</td>';
-            var date = val.paidDate.toDate().toDateString();
-            var time = val.paidDate.toDate().toLocaleTimeString('en-US');
-            html = html + '<td class="dt-time">' + date + ' ' + time + '</td>';
-            if (val.note != undefined && val.note != '') {
-                html = html + '<td>' + val.note + '</td>';
-            } else {
-                html = html + '<td></td>';
-            }
-            html = html + '</tr>';
-        });
-        return html;
-    }
-    function getRestaurantName(vendorId) {
-        database.collection('vendors').doc(vendorId).get().then(async function (snapshots) {
-            if(snapshots.exists){
-                var data = snapshots.data();
-                $(".restname_"+vendorId).text(data.title);
-            }
-        });
-    }
-    function buildOrderHTML(snapshots) {
-        var html = '';
-        var count = 1;
-        snapshots.docs.forEach((listval) => {
-            val = listval.data();
-            val.id = listval.id;
-            var route = '<?php echo route("orders.edit", ":id"); ?>';
-            route = route.replace(':id', val.id);
-            var vendorroute = '<?php echo route("restaurants.view", ":id");?>';
-            vendorroute = vendorroute.replace(':id', val.vendorID);
-            html = html + '<tr>';
-            html = html + '<td data-url="' + route + '" class="redirecttopage">' + val.id + '</td>';
-            var price = 0; 
-                var quan = 0;
-            val.products.forEach((product)=> {
-                if(product.quantity != 0){
-                    quan = quan + product.quantity;
-                }
-            })
-            html = html + '<td data-url="' + vendorroute + '" class="redirecttopage">' + val.vendor.title + '</td>';
-            var price =  buildHTMLProductstotal(val);
-            html = html + '<td data-url="' + route + '" class="redirecttopage">' + price + '</td>';
-            html = html + '<td data-url="' + route + '" class="redirecttopage"><i class="fa fa-shopping-cart"></i> ' + quan + '</td>';
-            html = html + '</a></tr>';
             count++;
         });
         return html;
@@ -886,9 +895,11 @@
         })
     }
     $(document).ready(function () {
-        $(document.body).on('click', '.redirecttopage', function () {
-            var url = $(this).attr('data-url');
-            window.location.href = url;
+        $(document.body).on('click', '.redirecttopage', function() {
+            var url = $(this).data('url');
+            if (url) {
+                window.location.href = url;
+            }
         });
 
         // Test new order button
