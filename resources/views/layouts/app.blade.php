@@ -1066,28 +1066,23 @@
                  }
              }
 
-             // Show enhanced toast notification for new order
+             let toastOffset = 0;
+
              function showNewOrderNotification(orderData) {
-                 // Play notification sound
                  playNotificationSound();
 
-                 // Check if toast plugin is available
-                 if (typeof $.toast === 'undefined') {
-                     console.error('Toast plugin not loaded!');
-                     // Fallback to browser notification
-                     if ('Notification' in window && Notification.permission === 'granted') {
-                         new Notification('New Order Received!', {
-                             body: `Order #${orderData.id} from ${orderData.vendor ? orderData.vendor.title : 'Restaurant'}`,
-                             icon: '/favicon.ico'
-                         });
-                     } else {
-                         // Simple alert as last resort
-                         alert(`New Order Received! Order #${orderData.id} from ${orderData.vendor ? orderData.vendor.title : 'Restaurant'}`);
-                     }
+                 // Fallback: Check for toast plugin
+                 if (typeof Swal === 'undefined') {
+                     console.error('SweetAlert not loaded!');
+                     alert(`New Order: #${orderData.id}`);
                      return;
                  }
 
-                 // Show enhanced toast notification
+                 // Create a unique wrapper per toast
+                 const wrapper = document.createElement('div');
+                 wrapper.style.marginTop = `${toastOffset}px`;
+                 document.getElementById('toast-container').appendChild(wrapper);
+
                  Swal.fire({
                      title: 'New Order Received!',
                      html: `<strong>Order #${orderData.id}</strong><br>From: ${orderData.vendor ? orderData.vendor.title : 'Restaurant'}`,
@@ -1095,26 +1090,30 @@
                      toast: true,
                      position: 'top',
                      showConfirmButton: false,
+                     showCloseButton: true,
                      timer: 10000,
                      timerProgressBar: true,
+                     target: wrapper,
                      didOpen: (toast) => {
                          toast.addEventListener('click', () => {
                              window.location.href = '{{ route("orders") }}';
                          });
+                     },
+                     willClose: () => {
+                         wrapper.remove();
+                         toastOffset -= 90; // adjust spacing after toast disappears
                      }
                  });
-                 // Update order count on dashboard if on home page
-                 if (window.location.pathname === '/dashboard' || window.location.pathname === '/') {
-                     updateOrderCount();
-                 }
 
-                 // Update notification badge
+                 toastOffset += 90; // adjust spacing for next toast (approx height)
+
+                 // Optional: reset offset if too many
+                 if (toastOffset > 500) toastOffset = 0;
+
+                 updateOrderCount();
                  updateNotificationBadge();
-
-                 // Add to recent orders for tooltip
                  addToRecentOrders(orderData);
              }
-
              // Add order to recent orders list
              function addToRecentOrders(orderData) {
                  const orderInfo = {

@@ -27,16 +27,18 @@
             </select>
         </div>
     </div>
+    <!-- Toast stacking container for SweetAlerts -->
+    <div id="toast-container" style="position: fixed; top: 1rem; right: 1rem; z-index: 9999;"></div>
     <ul class="navbar-nav my-lg-0 border-left pl-2 ml-2">
         <!-- Enhanced Orders Notification Bell -->
         <li class="nav-item dropdown" id="notification-container">
-            <a class="nav-link text-muted waves-effect waves-dark notification-bell" href="{{ route('orders') }}" 
+            <a class="nav-link text-muted waves-effect waves-dark notification-bell" href="{{ route('orders') }}"
                data-toggle="tooltip" data-placement="bottom" title="View Orders">
                 <i class="fa fa-bell" style="font-size: 18px;"></i>
                 <span class="badge badge-danger badge-counter" id="new-orders-badge" style="display: none; position: absolute; top: -5px; right: -5px; font-size: 10px; min-width: 18px; height: 18px; line-height: 18px; border-radius: 9px;">0</span>
             </a>
             <!-- Notification Tooltip Content -->
-            <div class="notification-tooltip-content" style="display: none;">
+            <div  class="notification-tooltip-content" style="display: none;">
                 <div class="tooltip-header">
                     <i class="fa fa-clock-o"></i> Recent Orders
                 </div>
@@ -45,24 +47,24 @@
                 </div>
             </div>
         </li>
-                         <!-- <li class="nav-item dropdown">
-                 <a class="nav-link text-muted waves-effect waves-dark" href="#" onclick="window.orderNotificationSystem.testNotification(); return false;" title="Test Notification">
-                     <i class="fa fa-bell-o" style="font-size: 16px;"></i>
-                 </a>
-             </li>
-             <li class="nav-item dropdown">
-                 <a class="nav-link text-muted waves-effect waves-dark" href="#" onclick="window.orderNotificationSystem.testCustomRingtone(); return false;" title="Test Custom Ringtone">
-                     <i class="fa fa-music" style="font-size: 16px;"></i>
-                 </a>
-             </li> -->
+{{--                         <li class="nav-item dropdown">--}}
+{{--                 <a class="nav-link text-muted waves-effect waves-dark" href="#" onclick="window.orderNotificationSystem.testNotification(); return false;" title="Test Notification">--}}
+{{--                     <i class="fa fa-bell-o" style="font-size: 16px;"></i>--}}
+{{--                 </a>--}}
+{{--             </li>--}}
+{{--              <li class="nav-item dropdown">--}}
+{{--                 <a class="nav-link text-muted waves-effect waves-dark" href="#" onclick="window.orderNotificationSystem.testCustomRingtone(); return false;" title="Test Custom Ringtone">--}}
+{{--                     <i class="fa fa-music" style="font-size: 16px;"></i>--}}
+{{--                 </a>--}}
+{{--             </li>--}}
         <li class="nav-item dropdown">
-           <div class="d-flex align-items-center dropdown-toggle text-muted waves-effect waves-dark" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> 
+           <div class="d-flex align-items-center dropdown-toggle text-muted waves-effect waves-dark" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <a class="nav-link " href="">
                <img src="{{ asset('/images/users/user-new.png') }}" alt="user" class="profile-pic"></a>
                <div class="nav-item-user">
                 <h5 class="text-dark mb-0">{{  Auth::user()->name }}</h5>
                 <!--<p class="mb-0">foodie@admin.com</p>-->
-               </div>  
+               </div>
              </div>
             <div class="dropdown-menu dropdown-menu-right scale-up">
                 <ul class="dropdown-user">
