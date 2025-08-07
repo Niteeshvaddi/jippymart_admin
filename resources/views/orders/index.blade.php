@@ -560,7 +560,29 @@
                         } else {
                             childData.orderType="{{trans('lang.order_delivery')}}";
                         }
-                        childData.amount=await buildHTMLProductstotal(childData);
+                        
+                        // --- REPLACE AMOUNT ASSIGNMENT TO USE order_Billing.ToPay ---
+                        childData.amount = '';
+                        try {
+                            const billingDoc = await database.collection('order_Billing').doc(childData.id).get();
+                            if (billingDoc.exists && billingDoc.data().ToPay !== undefined) {
+                                let toPay = parseFloat(billingDoc.data().ToPay);
+                                if (!isNaN(toPay)) {
+                                    if (currencyAtRight) {
+                                        childData.amount = toPay.toFixed(decimal_degits) + currentCurrency;
+                                    } else {
+                                        childData.amount = currentCurrency + toPay.toFixed(decimal_degits);
+                                    }
+                                }
+                            } else {
+                                // fallback to previous calculation if ToPay not found
+                                childData.amount = await buildHTMLProductstotal(childData);
+                            }
+                        } catch (e) {
+                            // fallback to previous calculation on error
+                            childData.amount = await buildHTMLProductstotal(childData);
+                        }
+                        
                         childData.id=doc.id; // Ensure the document ID is included in the data              
                         if(searchValue) {
                             var date='';
