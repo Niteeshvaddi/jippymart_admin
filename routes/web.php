@@ -165,7 +165,9 @@ Route::get('/cuisines', [App\Http\Controllers\CuisineController::class, 'index']
 Route::get('/cuisines/edit/{id}', [App\Http\Controllers\CuisineController::class, 'edit'])->name('cuisines.edit');
 Route::get('/cuisines/create', [App\Http\Controllers\CuisineController::class, 'create'])->name('cuisines.create');
 
-
+Route::get('/promotions', [App\Http\Controllers\PromotionController::class, 'index'])->name('promotions');
+Route::get('/promotions/edit/{id}', [App\Http\Controllers\PromotionController::class, 'edit'])->name('promotions.edit');
+Route::get('/promotions/create', [App\Http\Controllers\PromotionController::class, 'create'])->name('promotions.create');
 
 // Route::middleware(['permission:cuisine,cuisines'])->group(function () {
 

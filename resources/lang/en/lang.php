@@ -2444,8 +2444,10 @@ return [
     'import_instruction_1'=>'Make sure your Excel file has the correct column headers as shown in the template.',
     'import_instruction_2'=>'Required fields: name, price, vendorID, categoryID',
     'import_instruction_3'=>'vendorID and categoryID must exist in the system before importing.',
-    'import_instruction_4'=>'Boolean fields (publish, nonveg, isAvailable) should be "true" or "false".'
-
+    'import_instruction_4'=>'Boolean fields (publish, nonveg, isAvailable) should be "true" or "false".',
+    'promotions_and_offers'=>'Promotions & Offers',
+    'promotions_plural'=>'Promotions',
+    'promotions_table_text'=>'View and manage all the promotions',
 ];
 ?>
 

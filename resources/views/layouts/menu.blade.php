@@ -171,6 +171,14 @@ $role_has_permission = App\Models\Permission::where('role_id', $user->role_id)->
             </ul>
         </li>
         @endif
+
+        <li class="nav-subtitle"><span class="nav-subtitle-span">{{trans('lang.promotions_and_offers')}}</span></li>
+        <li><a class="waves-effect waves-dark" href="{!! url('promotions') !!}" aria-expanded="false">
+                <i class="mdi mdi-clipboard-text"></i>
+                <span class="hide-menu">{{trans('lang.promotions_plural')}}</span>
+            </a>
+        </li>
+
         <li class="nav-subtitle"><span class="nav-subtitle-span">{{trans('lang.business_setup')}}</span></li>
         <li><a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false">
                 <i class="mdi mdi-credit-card"></i>
