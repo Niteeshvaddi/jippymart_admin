@@ -139,7 +139,6 @@ $role_has_permission = App\Models\Permission::where('role_id', $user->role_id)->
                     <span class="hide-menu">{{trans('lang.cuisines_plural')}}</span>
                 </a>
             </li>
-
         @if(in_array('category', $role_has_permission))
         <li><a class="waves-effect waves-dark" href="{!! url('categories') !!}" aria-expanded="false">
                 <i class="mdi mdi-clipboard-text"></i>
@@ -294,6 +293,11 @@ $role_has_permission = App\Models\Permission::where('role_id', $user->role_id)->
             </a>
         </li>
         @endif
+        <li><a class="waves-effect waves-dark" href="{!! url('media') !!}" aria-expanded="false">
+                <i class="mdi mdi-clipboard-text"></i>
+                <span class="hide-menu">{{trans('Media')}}</span>
+            </a>
+        </li>
         @if(in_array('global-setting', $role_has_permission) || in_array('currency', $role_has_permission) || in_array('payment-method', $role_has_permission)
         || in_array('admin-commission', $role_has_permission) || in_array('radius', $role_has_permission) || in_array('dinein', $role_has_permission)
         || in_array('tax', $role_has_permission) || in_array('delivery-charge', $role_has_permission) || in_array('language', $role_has_permission)

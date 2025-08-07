@@ -394,7 +394,7 @@ Route::middleware(['permission:footer,footerTemplate'])->group(function () {
 });
 Route::middleware(['permission:home-page,homepageTemplate'])->group(function () {
     Route::get('/homepageTemplate', [App\Http\Controllers\SettingsController::class, 'homepageTemplate'])->name('homepageTemplate');
-}); 
+});
 Route::middleware(['permission:cms,cms'])->group(function () {
     Route::get('cms', [App\Http\Controllers\CmsController::class, 'index'])->name('cms');
 });
@@ -551,11 +551,14 @@ Route::get('/restaurantFilters/create', [App\Http\Controllers\RestaurantFiltersC
 Route::get('/restaurantFilters/edit/{id}', [App\Http\Controllers\RestaurantFiltersController::class, 'edit'])->name('restaurantFilters.edit');
 
 
+Route::get('/media', [App\Http\Controllers\MediaController::class, 'index'])->name('media.index');
+Route::get('/media/edit/{id}', [App\Http\Controllers\MediaController::class, 'edit'])->name('media.edit');
+Route::get('/media/create', [App\Http\Controllers\MediaController::class, 'create'])->name('media.create');
 
 
 
 Route::get('/create-package', function () {
-    return view('new_ui.create-package'); 
+    return view('new_ui.create-package');
 });
 Route::get('/add-subscription', function () {
     return view('new_ui.add-subscription');
