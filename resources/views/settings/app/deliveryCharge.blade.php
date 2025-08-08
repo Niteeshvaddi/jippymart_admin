@@ -23,23 +23,27 @@
             <label class="col-5 control-label" for="vendor_can_modify">{{ trans('lang.vendor_can_modify')}}</label>
           </div>
           <div class="form-group row width-100">
-            <label class="col-4 control-label">{{ trans('lang.delivery_charges_per')}} <span
-                class="global_distance_type"></span></label>
+            <label class="col-4 control-label">Base Delivery Charge</label>
             <div class="col-7">
-              <input type="number" class="form-control" id="delivery_charges_per_km">
+              <input type="number" class="form-control" id="base_delivery_charge">
             </div>
           </div>
           <div class="form-group row width-100">
-            <label class="col-4 control-label">{{ trans('lang.minimum_delivery_charges')}} </label>
+            <label class="col-4 control-label">Free Delivery Distance (km)</label>
             <div class="col-7">
-              <input type="number" class="form-control" id="minimum_delivery_charges">
+              <input type="number" class="form-control" id="free_delivery_distance_km ">
             </div>
           </div>
           <div class="form-group row width-100">
-            <label class="col-4 control-label">{{ trans('lang.minimum_delivery_charges_within')}} <span
-                class="global_distance_type"></span></label>
+            <label class="col-4 control-label">Item Total Threshold</label>
             <div class="col-7">
-              <input type="number" class="form-control" id="minimum_delivery_charges_within_km">
+              <input type="number" class="form-control" id="item_total_threshold">
+            </div>
+          </div>
+          <div class="form-group row width-100">
+            <label class="col-4 control-label">Per KM Charge Above Free Distance</label>
+            <div class="col-7">
+              <input type="number" class="form-control" id="per_km_charge_above_free_distance">
             </div>
           </div>
           <input type="hidden" id="distanceType">
@@ -62,42 +66,61 @@
       ref_deliverycharge.get().then(async function(snapshots_charge) {
         var deliveryChargeSettings=snapshots_charge.data();
         if(deliveryChargeSettings==undefined) {
-          database.collection('settings').doc('DeliveryCharge').set({'vendor_can_modify': '','delivery_charges_per_km': '','minimum_delivery_charges': '','minimum_delivery_charges_within_km': ''});
+          database.collection('settings').doc('DeliveryCharge').set({
+            'vendor_can_modify': false,
+            'base_delivery_charge': 23,
+            'free_delivery_distance_km': 7,
+            'item_total_threshold': 299,
+            'per_km_charge_above_free_distance': 8
+          });
         }
         jQuery("#data-table_processing").hide();
         try {
           if(deliveryChargeSettings.vendor_can_modify) {
             $("#vendor_can_modify").prop('checked',true);
           }
-          $("#delivery_charges_per_km").val(deliveryChargeSettings.delivery_charges_per_km);
-          $("#minimum_delivery_charges").val(deliveryChargeSettings.minimum_delivery_charges);
-          $("#minimum_delivery_charges_within_km").val(deliveryChargeSettings.minimum_delivery_charges_within_km);
+          $("#base_delivery_charge").val(deliveryChargeSettings.base_delivery_charge || 23);
+          $("#free_delivery_distance_km").val(deliveryChargeSettings.free_delivery_distance_km || 7);
+          $("#item_total_threshold").val(deliveryChargeSettings.item_total_threshold || 299);
+          $("#per_km_charge_above_free_distance").val(deliveryChargeSettings.per_km_charge_above_free_distance || 8);
         } catch(error) {
         }
       });
       $(".edit-setting-btn").click(function() {
-        var distanceType=$('#distanceType').val();
         var checkboxValue=$("#vendor_can_modify").is(":checked");
-        var delivery_charges_per_km=$("#delivery_charges_per_km").val();
-        var minimum_delivery_charges=$("#minimum_delivery_charges").val();
-        var minimum_delivery_charges_within_km=$("#minimum_delivery_charges_within_km").val();
-        if(delivery_charges_per_km=='') {
+        var base_delivery_charge=$("#base_delivery_charge").val();
+        var free_delivery_distance_km=$("#free_delivery_distance_km").val();
+        var item_total_threshold=$("#item_total_threshold").val();
+        var per_km_charge_above_free_distance=$("#per_km_charge_above_free_distance").val();
+
+        if(base_delivery_charge=='') {
           $(".error_top").show();
           $(".error_top").html("");
-          $(".error_top").append("<p>{{trans("lang.enter")}} {{ trans('lang.delivery_charges_per') }}"+' '+distanceType+"</p>");
+          $(".error_top").append("<p>Please enter Base Delivery Charge</p>");
           window.scrollTo(0,0);
-        } else if(minimum_delivery_charges=='') {
+        } else if(free_delivery_distance_km=='') {
           $(".error_top").show();
           $(".error_top").html("");
-          $(".error_top").append("<p>{{trans("lang.enter")}} {{ trans('lang.minimum_delivery_charges') }}</p>");
+          $(".error_top").append("<p>Please enter Free Delivery Distance</p>");
           window.scrollTo(0,0);
-        } else if(minimum_delivery_charges_within_km=='') {
+        } else if(item_total_threshold=='') {
           $(".error_top").show();
           $(".error_top").html("");
-          $(".error_top").append("<p>{{trans("lang.enter")}} {{ trans('lang.minimum_delivery_charges_within') }}"+' '+distanceType+"</p>");
+          $(".error_top").append("<p>Please enter Item Total Threshold</p>");
+          window.scrollTo(0,0);
+        } else if(per_km_charge_above_free_distance=='') {
+          $(".error_top").show();
+          $(".error_top").html("");
+          $(".error_top").append("<p>Please enter Per KM Charge Above Free Distance</p>");
           window.scrollTo(0,0);
         } else {
-          database.collection('settings').doc("DeliveryCharge").update({'vendor_can_modify': checkboxValue,'delivery_charges_per_km': parseInt(delivery_charges_per_km),'minimum_delivery_charges': parseInt(minimum_delivery_charges),'minimum_delivery_charges_within_km': parseInt(minimum_delivery_charges_within_km)}).then(function(result) {
+          database.collection('settings').doc("DeliveryCharge").update({
+            'vendor_can_modify': checkboxValue,
+            'base_delivery_charge': parseInt(base_delivery_charge),
+            'free_delivery_distance_km': parseInt(free_delivery_distance_km),
+            'item_total_threshold': parseInt(item_total_threshold),
+            'per_km_charge_above_free_distance': parseInt(per_km_charge_above_free_distance)
+          }).then(function(result) {
             window.location.href='{{ url("settings/app/deliveryCharge")}}';
           });
         }
