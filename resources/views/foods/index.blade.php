@@ -184,6 +184,7 @@
                                             <?php } ?>
                                             <th>{{trans('lang.food_name')}}</th>
                                             <th>{{trans('lang.food_price')}}</th>
+                                            <th>Discount Price</th>
                                             <?php if ($id == '') { ?>
                                                 <th>{{trans('lang.food_restaurant_id')}}</th>
                                             <?php } ?>
@@ -341,7 +342,8 @@ $('select').change(async function() {
                 { key: 'foodName', header: "{{trans('lang.food_name')}}" },
                 { key: 'restaurant', header: "{{trans('lang.restaurant')}}" },
                 { key: 'category', header: "{{trans('lang.category')}}" },
-                { key: 'finalPrice', header: "{{trans('lang.food_price')}}" },
+                { key: 'price', header: "{{trans('lang.food_price')}}" },
+                { key: 'disPrice', header: "Discount Price" },
             ],
             fileName: "{{trans('lang.food_table')}}",
         };
@@ -357,9 +359,9 @@ $('select').change(async function() {
                 const orderColumnIndex=data.order[0].column;
                 const orderDirection=data.order[0].dir;
                 @if($id!='')
-                    const orderableColumns=(checkDeletePermission)? ['','foodName','finalPrice','category','','']:['name','finalPrice','category','','']; // Ensure this matches the actual column names
+                    const orderableColumns=(checkDeletePermission)? ['','foodName','price','disPrice','category','','']:['name','price','disPrice','category','','']; // Ensure this matches the actual column names
                 @else
-                    const orderableColumns=(checkDeletePermission)? ['','foodName','finalPrice','restaurant','category','','']:['name','finalPrice','restaurant','category','','']; // Ensure this matches the actual column names
+                    const orderableColumns=(checkDeletePermission)? ['','foodName','price','disPrice','restaurant','category','','']:['name','price','disPrice','restaurant','category','','']; // Ensure this matches the actual column names
                 @endif
                 const orderByField=orderableColumns[orderColumnIndex]; // Adjust the index to match your table
                 if(searchValue.length>=3||searchValue.length===0) {
@@ -410,8 +412,9 @@ $('select').change(async function() {
                         if(searchValue) {
                             if(
                                 (childData.name&&childData.name.toString().toLowerCase().includes(searchValue))||
-                                (childData.finalPrice&&childData.finalPrice.toString().includes(searchValue))
-                                ||(childData.restaurant&&childData.restaurant.toString().toLowerCase().includes(searchValue))||
+                                (childData.price&&childData.price.toString().includes(searchValue))||
+                                (childData.disPrice&&childData.disPrice.toString().includes(searchValue))||
+                                (childData.restaurant&&childData.restaurant.toString().toLowerCase().includes(searchValue))||
                                 (childData.category&&childData.category.toString().toLowerCase().includes(searchValue))
                             ) {
                                 filteredRecords.push(childData);
@@ -423,7 +426,7 @@ $('select').change(async function() {
                     filteredRecords.sort((a,b) => {
                         let aValue=a[orderByField];
                         let bValue=b[orderByField];
-                        if(orderByField==='finalPrice') {
+                        if(orderByField==='price'||orderByField==='disPrice') {
                             aValue=a[orderByField]? parseInt(a[orderByField]):0;
                             bValue=b[orderByField]? parseInt(b[orderByField]):0;
                         } else {
@@ -467,11 +470,11 @@ $('select').change(async function() {
             columnDefs: [
                 {
                     orderable: false,
-                    targets: (restaurantID=='')? ((checkDeletePermission)? [0,5,6]:[4,5]):((checkDeletePermission)? [0,4,5]:[3,5])
+                    targets: (restaurantID=='')? ((checkDeletePermission)? [0,6,7]:[5,6]):((checkDeletePermission)? [0,5,6]:[4,6])
                 },
                 {
                     type: 'formatted-num',
-                    targets: (checkDeletePermission)? [2]:[3]
+                    targets: (checkDeletePermission)? [2,3]:[3,4]
                 }
             ],
             "language": {
@@ -559,18 +562,29 @@ $('select').change(async function() {
                 'for="is_open_'+id+'" ></label></td>');
         }
         html.push(imageHtml+'<a href="'+route1+'" >'+val.name+'</a>');
-        if(val.hasOwnProperty('disPrice')&&val.disPrice!=''&&val.disPrice!='0') {
+        // Original price column - show with strikethrough when discount is available
+        if(val.hasOwnProperty('disPrice') && val.disPrice != '' && val.disPrice != '0' && val.disPrice != val.price) {
+            // Has discount - show original price with strikethrough
             if(currencyAtRight) {
-                html.push('<span class="text-green">'+parseFloat(val.disPrice).toFixed(decimal_degits)+''+currentCurrency+'  <s>'+parseFloat(val.price).toFixed(decimal_degits)+''+currentCurrency+'</s>');
+                html.push('<span class="text-muted" style="text-decoration: line-through;">'+parseFloat(val.price).toFixed(decimal_degits)+''+currentCurrency+'</span>');
             } else {
-                html.push('<span class="text-green">'+''+currentCurrency+parseFloat(val.disPrice).toFixed(decimal_degits)+'  <s>'+currentCurrency+''+parseFloat(val.price).toFixed(decimal_degits)+'</s>');
+                html.push('<span class="text-muted" style="text-decoration: line-through;">'+currentCurrency+''+parseFloat(val.price).toFixed(decimal_degits)+'</span>');
+            }
+            // Show discount price in green
+            if(currencyAtRight) {
+                html.push('<span class="text-green">'+parseFloat(val.disPrice).toFixed(decimal_degits)+''+currentCurrency+'</span>');
+            } else {
+                html.push('<span class="text-green">'+currentCurrency+''+parseFloat(val.disPrice).toFixed(decimal_degits)+'</span>');
             }
         } else {
+            // No discount - show regular price
             if(currencyAtRight) {
-                html.push('<span class="text-green">'+parseFloat(val.price).toFixed(decimal_degits)+''+currentCurrency);
+                html.push('<span class="text-green">'+parseFloat(val.price).toFixed(decimal_degits)+''+currentCurrency+'</span>');
             } else {
-                html.push('<span class="text-green">'+currentCurrency+''+parseFloat(val.price).toFixed(decimal_degits));
+                html.push('<span class="text-green">'+currentCurrency+''+parseFloat(val.price).toFixed(decimal_degits)+'</span>');
             }
+            // Empty cell where discount price would be
+            html.push('<span class="text-muted">-</span>');
         }
         <?php if ($id == '') { ?>
             var restaurantroute='{{route("restaurants.view", ":id")}}';

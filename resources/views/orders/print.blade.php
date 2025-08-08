@@ -395,8 +395,8 @@ ref.get().then( async function(snapshots){
                   html += '</ul>';
                   html += '</div>';
               }
-              price_item=parseFloat(val.price).toFixed(decimal_degits);  
-              totalProductPrice =  parseFloat(price_item) * parseInt(val.quantity);
+              price_item=parseFloat(val.discountPrice).toFixed(decimal_degits);  
+              totalProductPrice =  parseFloat(val.discountPrice) * parseInt(val.quantity);
               var extras_price=0;
               if(product.extras!=undefined && product.extras!='' && product.extras.length>0){
                 extras_price_item=(parseFloat(val.extras_price)*parseInt(val.quantity)).toFixed(2);

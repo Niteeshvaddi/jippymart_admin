@@ -156,7 +156,7 @@
                                         var checked = selectedMedia.has(id) ? 'checked' : '';
                                         var cell = `
     <div style="display: flex; align-items: center; gap: 6px;">
-        
+
         <input type="checkbox" name="record" class="is_open" dataId="${id}" ${checked} style="margin: 0; display: inline-block !important; visibility: visible !important; opacity: 1 !important; width: 16px !important; height: 16px !important; appearance: auto !important;">
         <button class="expand-row" data-id="${id}" tabindex="-1" style="
             width: 18px;
