@@ -1,5 +1,30 @@
 @extends('layouts.app')
 @section('content')
+<style>
+    .editable-price {
+        transition: all 0.2s ease;
+        border-radius: 3px;
+        padding: 2px 4px;
+    }
+    .editable-price:hover {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+    }
+    .editable-price.text-success {
+        background-color: #d4edda !important;
+        border-color: #c3e6cb !important;
+    }
+    .editable-price.text-danger {
+        background-color: #f8d7da !important;
+        border-color: #f5c6cb !important;
+    }
+    .editable-price input {
+        border: 2px solid #007bff;
+        border-radius: 3px;
+        padding: 2px 4px;
+        font-size: inherit;
+    }
+</style>
 <div class="page-wrapper">
     <div class="row page-titles">
         <div class="col-md-5 align-self-center">
@@ -562,29 +587,29 @@ $('select').change(async function() {
                 'for="is_open_'+id+'" ></label></td>');
         }
         html.push(imageHtml+'<a href="'+route1+'" >'+val.name+'</a>');
-        // Original price column - show with strikethrough when discount is available
+        // Original price column - editable
         if(val.hasOwnProperty('disPrice') && val.disPrice != '' && val.disPrice != '0' && val.disPrice != val.price) {
             // Has discount - show original price with strikethrough
             if(currencyAtRight) {
-                html.push('<span class="text-muted" style="text-decoration: line-through;">'+parseFloat(val.price).toFixed(decimal_degits)+''+currentCurrency+'</span>');
+                html.push('<span class="editable-price text-muted" style="text-decoration: line-through; cursor: pointer;" data-id="'+val.id+'" data-field="price" data-value="'+val.price+'">'+parseFloat(val.price).toFixed(decimal_degits)+''+currentCurrency+'</span>');
             } else {
-                html.push('<span class="text-muted" style="text-decoration: line-through;">'+currentCurrency+''+parseFloat(val.price).toFixed(decimal_degits)+'</span>');
+                html.push('<span class="editable-price text-muted" style="text-decoration: line-through; cursor: pointer;" data-id="'+val.id+'" data-field="price" data-value="'+val.price+'">'+currentCurrency+''+parseFloat(val.price).toFixed(decimal_degits)+'</span>');
             }
-            // Show discount price in green
+            // Show discount price in green - editable
             if(currencyAtRight) {
-                html.push('<span class="text-green">'+parseFloat(val.disPrice).toFixed(decimal_degits)+''+currentCurrency+'</span>');
+                html.push('<span class="editable-price text-green" style="cursor: pointer;" data-id="'+val.id+'" data-field="disPrice" data-value="'+val.disPrice+'">'+parseFloat(val.disPrice).toFixed(decimal_degits)+''+currentCurrency+'</span>');
             } else {
-                html.push('<span class="text-green">'+currentCurrency+''+parseFloat(val.disPrice).toFixed(decimal_degits)+'</span>');
+                html.push('<span class="editable-price text-green" style="cursor: pointer;" data-id="'+val.id+'" data-field="disPrice" data-value="'+val.disPrice+'">'+currentCurrency+''+parseFloat(val.disPrice).toFixed(decimal_degits)+'</span>');
             }
         } else {
-            // No discount - show regular price
+            // No discount - show regular price - editable
             if(currencyAtRight) {
-                html.push('<span class="text-green">'+parseFloat(val.price).toFixed(decimal_degits)+''+currentCurrency+'</span>');
+                html.push('<span class="editable-price text-green" style="cursor: pointer;" data-id="'+val.id+'" data-field="price" data-value="'+val.price+'">'+parseFloat(val.price).toFixed(decimal_degits)+''+currentCurrency+'</span>');
             } else {
-                html.push('<span class="text-green">'+currentCurrency+''+parseFloat(val.price).toFixed(decimal_degits)+'</span>');
+                html.push('<span class="editable-price text-green" style="cursor: pointer;" data-id="'+val.id+'" data-field="price" data-value="'+val.price+'">'+currentCurrency+''+parseFloat(val.price).toFixed(decimal_degits)+'</span>');
             }
-            // Empty cell where discount price would be
-            html.push('<span class="text-muted">-</span>');
+            // Empty cell where discount price would be - editable
+            html.push('<span class="editable-price text-muted" style="cursor: pointer;" data-id="'+val.id+'" data-field="disPrice" data-value="0">-</span>');
         }
         <?php if ($id == '') { ?>
             var restaurantroute='{{route("restaurants.view", ":id")}}';
@@ -698,16 +723,96 @@ $('select').change(async function() {
         var isChecked=$(this).prop('checked');
         $('input[type="checkbox"][name="record"]').prop('checked',isChecked);
     });
-    $('#deleteAll').click(function() {
-        if(confirm("{{trans('lang.selected_delete_alert')}}")) {
-            jQuery("#data-table_processing").show();
-            // Loop through all selected records and delete them
-            $('input[type="checkbox"][name="record"]:checked').each(async function() {
-                var id=$(this).attr('dataId');
-                await deleteDocumentWithImage('vendor_products',id,'photo','photos');
-                window.location.reload();
-            });
-        }
-    });
+         $('#deleteAll').click(function() {
+         if(confirm("{{trans('lang.selected_delete_alert')}}")) {
+             jQuery("#data-table_processing").show();
+             // Loop through all selected records and delete them
+             $('input[type="checkbox"][name="record"]:checked').each(async function() {
+                 var id=$(this).attr('dataId');
+                 await deleteDocumentWithImage('vendor_products',id,'photo','photos');
+                 window.location.reload();
+             });
+         }
+     });
+
+     // Inline editing functionality for prices
+     $(document).on('click', '.editable-price', function() {
+         var $this = $(this);
+         var currentValue = $this.data('value');
+         var field = $this.data('field');
+         var id = $this.data('id');
+         
+         // Create input field
+         var input = $('<input>', {
+             type: 'number',
+             step: '0.01',
+             min: '0',
+             class: 'form-control form-control-sm',
+             value: currentValue,
+             style: 'width: 80px; display: inline-block;'
+         });
+         
+         // Replace span with input
+         $this.hide();
+         $this.after(input);
+         input.focus();
+         
+         // Handle save on enter or blur
+         function saveValue() {
+             var newValue = parseFloat(input.val());
+             if (isNaN(newValue) || newValue < 0) {
+                 newValue = 0;
+             }
+             
+             // Update the data attribute
+             $this.data('value', newValue);
+             
+             // Update the display
+             var displayValue = newValue.toFixed(decimal_degits);
+             if (currencyAtRight) {
+                 $this.text(displayValue + currentCurrency);
+             } else {
+                 $this.text(currentCurrency + displayValue);
+             }
+             
+             // Remove input and show span
+             input.remove();
+             $this.show();
+             
+             // Update in database
+             var updateData = {};
+             updateData[field] = newValue;
+             
+             database.collection('vendor_products').doc(id).update(updateData).then(function() {
+                 // Show success indicator
+                 $this.addClass('text-success');
+                 setTimeout(function() {
+                     $this.removeClass('text-success');
+                 }, 1000);
+             }).catch(function(error) {
+                 console.error('Error updating price:', error);
+                 // Show error indicator
+                 $this.addClass('text-danger');
+                 setTimeout(function() {
+                     $this.removeClass('text-danger');
+                 }, 2000);
+             });
+         }
+         
+         input.on('blur', saveValue);
+         input.on('keypress', function(e) {
+             if (e.which === 13) { // Enter key
+                 saveValue();
+             }
+         });
+         
+         // Handle escape key
+         input.on('keydown', function(e) {
+             if (e.which === 27) { // Escape key
+                 input.remove();
+                 $this.show();
+             }
+         });
+     });
 </script>
 @endsection
