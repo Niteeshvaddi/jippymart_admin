@@ -237,7 +237,7 @@
                 </li>
             </ul>
         </li>
-        @if(in_array('orders', $role_has_permission) || in_array('gift-cards', $role_has_permission) || in_array('coupons', $role_has_permission) || in_array('documents', $role_has_permission))
+        @if(in_array('orders', $role_has_permission) || in_array('gift-cards', $role_has_permission) || in_array('coupons', $role_has_permission) || in_array('documents', $role_has_permission) || in_array('catering', $role_has_permission))
             <li class="nav-subtitle"><span
                     class="nav-subtitle-span">{{trans('lang.order_and_promotions_management')}}</span></li>
         @endif
@@ -245,6 +245,14 @@
             <li><a class="waves-effect waves-dark" href="{!! url('orders') !!}" aria-expanded="false">
                     <i class="mdi mdi-library-books"></i>
                     <span class="hide-menu">{{trans('lang.order_plural')}}</span>
+                </a>
+            </li>
+        @endif
+        @if(in_array('catering', $role_has_permission))
+            <li class="nav-subtitle"><span class="nav-subtitle-span">Catering</span></li>
+            <li><a class="waves-effect waves-dark" href="{!! url('catering') !!}" aria-expanded="false">
+                    <i class="mdi mdi-silverware-fork-knife"></i>
+                    <span class="hide-menu">Catering Requests</span>
                 </a>
             </li>
         @endif
