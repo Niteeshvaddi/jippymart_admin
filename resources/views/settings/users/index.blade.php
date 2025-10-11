@@ -321,7 +321,7 @@
                     const searchValue = data.search.value.toLowerCase();
                     const orderColumnIndex = data.order[0].column;
                     const orderDirection = data.order[0].dir;
-                    const orderableColumns = (checkDeletePermission) ? ['', 'fullName', 'email', 'phoneNumber', 'zone', 'createdAt', '', '', ''] : ['fullName', 'email', 'phoneNumber', 'createdAt', '', '', ''];
+                    const orderableColumns = (checkDeletePermission) ? ['', 'fullName', 'email', 'phoneNumber', 'zone', 'createdAt', '', '', ''] : ['fullName', 'email', 'phoneNumber', 'zone', 'createdAt', '', '', ''];
                     const orderByField = orderableColumns[orderColumnIndex]; // Adjust the index to match your table
                     if (searchValue.length >= 3 || searchValue.length === 0) {
                         $('#data-table_processing').show();
@@ -516,16 +516,16 @@
                         });
                     });
                 },
-                order: [4, 'desc'],
+                order: [checkDeletePermission ? 5 : 4, 'desc'],
                 columnDefs: [
                     {
-                        targets: (checkDeletePermission) ? 4 : 3,
+                        targets: (checkDeletePermission) ? 5 : 4,
                         type: 'date',
                         render: function (data) {
                             return data;
                         }
                     },
-                    {orderable: false, targets: (checkDeletePermission) ? [0, 5, 6, 7] : [4, 5, 6]},
+                    {orderable: false, targets: (checkDeletePermission) ? [0, 6, 7] : [5, 6]},
                 ],
                 "language": {
                     "zeroRecords": "{{trans("lang.no_record_found")}}",
