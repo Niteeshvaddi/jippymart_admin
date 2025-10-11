@@ -194,6 +194,14 @@ Route::middleware(['permission:orders,orders.edit'])->group(function () {
     Route::get('/orders/edit/{id}', [App\Http\Controllers\OrderController::class, 'edit'])->name('orders.edit');
 
 });
+
+// Catering Requests Routes
+Route::middleware(['permission:catering,catering'])->group(function () {
+    Route::get('/catering', [App\Http\Controllers\CateringController::class, 'index'])->name('catering');
+});
+Route::middleware(['permission:catering,catering.edit'])->group(function () {
+    Route::get('/catering/edit/{id}', [App\Http\Controllers\CateringController::class, 'edit'])->name('catering.edit');
+});
 Route::middleware(['permission:orders,vendors.orderprint'])->group(function () {
     Route::get('/orders/print/{id}', [App\Http\Controllers\OrderController::class, 'orderprint'])->name('vendors.orderprint');
 
