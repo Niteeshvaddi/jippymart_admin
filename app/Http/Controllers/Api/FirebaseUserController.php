@@ -18,6 +18,12 @@ class FirebaseUserController extends Controller
 
         // Create Firestore database connection
         $this->firestore = $factory->createFirestore()->database();
+//        $this->firebase = (new \Kreait\Firebase\Factory())
+//            ->withServiceAccount(storage_path('storage/app/firebase/credentials.json'))
+//            ->createFirestore();
+//
+//        $this->firestore = $this->firebase->database();
+
     }
 
     public function index(Request $request)
@@ -33,7 +39,6 @@ class FirebaseUserController extends Controller
             ], 400);
         }
 
-        // Cache key for performance
         $cacheKey = "firebase_users_all_fields_{$role}_{$pageToken}_{$limit}";
 
         $data = Cache::remember($cacheKey, 5, function () use ($role, $limit, $pageToken) {
@@ -49,14 +54,31 @@ class FirebaseUserController extends Controller
             $users = [];
             $lastDoc = null;
 
+            // Initialize counters
+            $total = 0;
+            $active = 0;
+            $inactive = 0;
+            $documentVerified = 0;
+
             foreach ($documents as $document) {
                 $docData = $document->data();
-
-                // Include all fields dynamically
                 $docData['id'] = $document->id();
 
                 $users[] = $docData;
                 $lastDoc = $document;
+
+                // Counting logic
+                $total++;
+
+                if (isset($docData['active']) && $docData['active'] === true) {
+                    $active++;
+                } else {
+                    $inactive++;
+                }
+
+                if (!empty($docData['isDocumentVerify']) && $docData['isDocumentVerify'] === true) {
+                    $documentVerified++;
+                }
             }
 
             $nextPageToken = $lastDoc ? $lastDoc->id() : null;
@@ -64,6 +86,12 @@ class FirebaseUserController extends Controller
             return [
                 'users' => $users,
                 'next_page_token' => $nextPageToken,
+                'counts' => [
+                    'total' => $total,
+                    'active' => $active,
+                    'inactive' => $inactive,
+                    'document_verified' => $documentVerified,
+                ],
             ];
         });
 
@@ -76,6 +104,7 @@ class FirebaseUserController extends Controller
                 'next_page_token' => $data['next_page_token'],
                 'count' => count($data['users']),
             ],
+            'counts' => $data['counts'],
             'data' => $data['users'],
         ]);
     }
