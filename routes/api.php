@@ -27,7 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
-Route::middleware(['auth:sanctum','throttle:5,1'])->group(function () {
+Route::middleware(['throttle:5,1'])->group(function () {
     Route::get('/firebase/users', [FirebaseUserController::class, 'index']);
     Route::get('/firebase/orders', [FirebaseOrderController::class, 'index']);
 });

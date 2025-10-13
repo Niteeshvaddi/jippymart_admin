@@ -16,14 +16,7 @@ class FirebaseUserController extends Controller
         $factory = (new Factory)
             ->withServiceAccount(base_path(env('FIREBASE_CREDENTIALS')));
 
-        // Create Firestore database connection
         $this->firestore = $factory->createFirestore()->database();
-//        $this->firebase = (new \Kreait\Firebase\Factory())
-//            ->withServiceAccount(storage_path('storage/app/firebase/credentials.json'))
-//            ->createFirestore();
-//
-//        $this->firestore = $this->firebase->database();
-
     }
 
     public function index(Request $request)
